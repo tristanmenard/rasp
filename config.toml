@@ -1,0 +1,27 @@
+[general]
+    # set to 0 to use all available CPU threads
+    threads = 0
+
+[data]
+    # if these are left empty, a suitable location in the user's home directory will be chosen
+    cache_dir = ""
+    srtm_dir = ""
+
+[logging]
+    version = 1
+    disable_existing_loggers = false
+    incremental = false
+
+    [logging.formatters.simple]
+    format = "%(asctime)s | %(name)s | %(levelname)s | %(message)s"
+    datefmt = "%Y-%m-%d %H:%M:%S"
+    
+    [logging.handlers.console]
+    class = "logging.StreamHandler"
+    level = "INFO"
+    formatter = "simple"
+    stream = "ext://sys.stdout"
+
+    [logging.loggers.rasp] # main logger
+    level = "INFO"
+    handlers = ["console"]
