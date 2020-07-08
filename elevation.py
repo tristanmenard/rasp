@@ -351,6 +351,7 @@ class Elevation:
         if full:
             inds = np.asarray(np.unravel_index(np.arange(self.dem.size), self.shape), dtype=np.int64)
             self.roi = dict(bounds=self.bounds, inds=inds)
+            return
 
         if (bounds is None) and ((location is None) or (radius is None)):
             raise ValueError('either `bounds` or `location` & `radius` must be supplied')
