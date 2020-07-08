@@ -48,6 +48,9 @@ class JITProfile:
         float : dL1, dL2
             distances to the first and second horizon
         """
+        if self.distance == 0:
+            return (0.0, 0.0, 0.0, 0.0)
+
         xi = self.distance / (self.length - 1)
         za = self.elevation[0] + tx_height
         zb = self.elevation[-1] + rx_height

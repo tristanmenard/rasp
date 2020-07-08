@@ -115,6 +115,9 @@ def attenuation(distance, frequency, tx_height, rx_height, horizons, Δh, Ns, Zg
     float
         predicted attenuation, *including* free-space loss, in dB
     """
+    if distance == 0:
+        return 0.0
+
     θe1, θe2, dL1, dL2 = horizons
     he1, he2 = tx_height, rx_height  # effective heights
     k = frequency / f0
