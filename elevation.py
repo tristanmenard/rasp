@@ -7,7 +7,7 @@ import numba as nb
 import numpy as np
 from numpy import cos, sin, arccos, exp, sqrt
 
-from .utils.geodesy import distance, _waypoints
+from .utils.geodesy import distance, geospace
 from .constants import EARTH_RADIUS, HALFPI, DEG_PER_RAD, RAD_PER_DEG
 from .profile import JITProfile, Profile
 from .itm import itm
@@ -125,7 +125,7 @@ class JITElevation:
             φ = np.linspace(φ1, φ2, num)
             λ = np.linspace(λ1, λ2, num)
         else:
-            φ, λ = _waypoints(φ1, λ1, φ2, λ2, num, lut)
+            φ, λ = geospace(φ1, λ1, φ2, λ2, num)
 
         return JITProfile(φ.size, self.get_elevations_regular(φ, λ), φ, λ, EARTH_RADIUS * β)
 
@@ -162,7 +162,7 @@ class JITElevation:
                     Δh, frequency, Ns, Zgnd, γe, lut, flatearth, area_mode):
         if area_mode:
             horizons = self.estimate_horizons(tx_height, rx_height, 5, Δh, γe)
-            dist = distance(φ1, λ1, φ2, λ2, haversine=True)
+            dist = distance(φ1, λ1, φ2, λ2)
         else:
             jitprofile = self.get_profile(φ1, λ1, φ2, λ2, 0, lut, flatearth)
             Δh = jitprofile.irregularity()
@@ -447,7 +447,7 @@ class Elevation:
                          Δh, frequency, Ns, Zgnd, γe, lut, flatearth, area_mode):
         loss = np.empty(inds.shape[1])
 
-        for i in nb.prange(len(inds[0])):
+        for i in nb.prange(loss.size):
             φ2 = jitelevation.latitude[inds[0, i]]
             λ2 = jitelevation.longitude[inds[1, i]]
             loss[i] = jitelevation.attenuation(
