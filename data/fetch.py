@@ -56,43 +56,33 @@ def download(url, dest, force=False, chunk_size=8192):
     dest_size = dest.stat().st_size if dest.exists() else 0
     file_size = int(requests.head(url).headers["Content-Length"])
 
-    # print(requests.head(url).headers)
-
     if (dest_size == file_size) and (not force):
-        logger.info(f'destination ({dest}) exists; skipping download')
+        logger.info(f"destination ({dest}) exists; skipping download")
         return dest
 
-    # counter = enlighten.Counter(total=file_size, desc=dest.name, unit='B')
+    logger.info(f"downloading {url} to {dest}")
 
-    logger.info(f'downloading {url} to {dest}')
-    # with open(dest, "wb",) as f, requests.get(url, stream=True) as r:
-    #     for chunk in r.iter_content(chunk_size=chunk_size):
-    #         f.write(chunk)
-    with open(dest, "wb",) as f, requests.get(url, stream=True) as r, tqdm(
-        total=file_size, unit="B", unit_scale=True, desc=dest.name
-    ) as pbar:
+    with open(dest, "wb",) as f, requests.get(
+        url, stream=True
+    ) as r, tqdm(total=file_size, unit="B", unit_scale=True, desc=dest.name) as pbar:
         for chunk in r.iter_content(chunk_size=chunk_size):
             f.write(chunk)
             pbar.update(len(chunk))
-    # with open(dest, "wb",) as f, requests.get(url, stream=True) as r:
-    #     for chunk in r.iter_content(chunk_size=chunk_size):
-    #         f.write(chunk)
-    #         counter.update(incr=len(chunk))
 
     return dest
 
 
 def unzip(path, remove=False):
-    logger.info(f'unzipping {path}')
+    logger.info(f"unzipping {path}")
 
     with zipfile.ZipFile(path) as zf:
         namelist = zf.namelist()
         zf.extractall(path=path.parent)
 
-    logger.info(f'extracted {len(namelist)} files to {path.parent}')
+    logger.info(f"extracted {len(namelist)} files to {path.parent}")
 
     if remove:
-        logger.info(f'removing {path}')
+        logger.info(f"removing {path}")
         path.unlink()
 
     return [path.parent.joinpath(name) for name in namelist]
@@ -110,6 +100,7 @@ def baserad(url=BASERAD_URL, dest=CACHE_DIR, munge=True, force=False, remove=Fal
 
     if munge:
         from . import munge
+
         munge.baserad(input_dir=contents[0].parent)
 
 
@@ -123,7 +114,8 @@ def sitedata(url=SITEDATA_URL, dest=CACHE_DIR, munge=True, force=False, remove=F
 
     if munge:
         from . import munge
-        munge.sitedata(input_path=contents[0].with_suffix('.csv'))
+
+        munge.sitedata(input_path=contents[0].with_suffix(".csv"))
 
 
 def srtm_inds(bounds=None, location=None, radius=None):
@@ -143,7 +135,9 @@ def srtm_inds(bounds=None, location=None, radius=None):
         _, λ2 = geodesy.destination(*location, π / 2, radius)  # East
         _, λ1 = geodesy.destination(*location, 3 * π / 2, radius)  # West
     else:
-        raise ValueError('either `bounds` or both `location` and `radius` must be supplied')
+        raise ValueError(
+            "either `bounds` or both `location` and `radius` must be supplied"
+        )
 
     y1, y2 = y_ind(φ1), y_ind(φ2)
     x1, x2 = x_ind(λ1), x_ind(λ2)
@@ -154,17 +148,24 @@ def srtm_inds(bounds=None, location=None, radius=None):
     return itertools.product(y_inds, x_inds)
 
 
-def srtm(bounds=None, location=None, radius=None, url_format=SRTM_URL_FORMAT, dest=SRTM_DIR, **kwargs):
+def srtm(
+    bounds=None,
+    location=None,
+    radius=None,
+    url_format=SRTM_URL_FORMAT,
+    dest=SRTM_DIR,
+    **kwargs,
+):
     """Fetch SRTM digital elevation data."""
     urls = [
         SRTM_URL_FORMAT.format(xx=xx, yy=yy)
         for yy, xx in srtm_inds(bounds=bounds, location=location, radius=radius)
     ]
-    logger.info(f'requested area overlaps {len(urls)} SRTM tiles')
+    logger.info(f"requested area overlaps {len(urls)} SRTM tiles")
 
     for url in urls:
         dest_dl = download(url, dest, **kwargs)
-        if not dest_dl.with_suffix('.asc').exists():
+        if not dest_dl.with_suffix(".asc").exists():
             unzip(dest_dl, remove=False)
 
 
