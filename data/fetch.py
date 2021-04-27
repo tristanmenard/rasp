@@ -19,10 +19,10 @@ __all__ = [
     "sitedata",
 ]
 
-BASERAD_URL = "http://www.ic.gc.ca/engineering/BC_DBF_FILES/baserad.zip"
-SITEDATA_URL = "http://www.ic.gc.ca/engineering/SMS_TAFL_Files/Site_Data_Extract.zip"
+BASERAD_URL = "https://www.ic.gc.ca/engineering/BC_DBF_FILES/baserad.zip"
+SITEDATA_URL = "https://www.ic.gc.ca/engineering/SMS_TAFL_Files/Site_Data_Extract.zip"
 
-SRTM_URL_FORMAT = "http://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/ascii/srtm_{xx:02d}_{yy:02d}.zip"
+SRTM_URL_FORMAT = "https://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/ASCII/srtm_{xx:02d}_{yy:02d}.zip"
 
 
 def download(url, dest, force=False, chunk_size=8192):
