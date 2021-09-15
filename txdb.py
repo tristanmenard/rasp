@@ -7,6 +7,7 @@ from tqdm.auto import tqdm
 
 from rasp import logger
 from .itm.itm import effective_curvature, watts_to_dBW
+from .utils.misc import check_bounds
 
 
 class Tx:
@@ -118,6 +119,7 @@ class TxDB:
         return TxDB(pd.concat((self.dataframe, *dfs), sort=False, **kwargs))
 
     def in_bounds(self, bounds, inplace=False):
+        check_bounds(bounds)
         (φmin, λmin), (φmax, λmax) = bounds
         good_inds = (
             (φmin <= self.dataframe.latitude)

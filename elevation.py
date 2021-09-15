@@ -8,6 +8,7 @@ import numpy as np
 from numpy import cos, sin, arccos, exp, sqrt
 
 from .utils.geodesy import distance, geospace
+from .utils.misc import check_bounds
 from .constants import EARTH_RADIUS, HALFPI, DEG_PER_RAD, RAD_PER_DEG
 from .profile import JITProfile, Profile
 from .itm import itm
@@ -246,6 +247,7 @@ class Elevation:
         from rasp import SRTM_DIR
         from .data import fetch
 
+        check_bounds(bounds)
         inds = list(fetch.srtm_inds(bounds=bounds))
         yy, xx = inds[0]
         elevation = cls.from_srtm_ascii(SRTM_DIR.joinpath(f'srtm_{xx:02d}_{yy:02d}.asc'))
@@ -357,6 +359,7 @@ class Elevation:
             raise ValueError('either `bounds` or `location` & `radius` must be supplied')
 
         if bounds is not None:
+            check_bounds(bounds)
             (φmin, λmin), (φmax, λmax) = bounds
             ind_y = np.searchsorted(self.latitude, (φmin, φmax))
             ind_y = np.arange(ind_y[0], ind_y[1] + 1)

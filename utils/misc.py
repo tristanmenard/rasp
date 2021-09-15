@@ -27,3 +27,15 @@ def watts_to_dBW(power):
 def dBW_to_watts(dbw):
     """Convert log-power from dBW to watts."""
     return 10 ** (dbw / 10)
+
+
+def check_bounds(bounds):
+    """Check that given bounds make sense. If they do not, raise an error."""
+    S = bounds[0][0]
+    W = bounds[0][1]
+    N = bounds[1][0]
+    E = bounds[1][1]
+    if E <= W:
+        raise ValueError(f'East bound ({E}) should be greater than West bound ({W}).')
+    if N <= S:
+        raise ValueError(f'North bound ({N}) should be greater than South bound ({S}).')
