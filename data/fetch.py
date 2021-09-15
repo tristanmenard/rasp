@@ -14,16 +14,13 @@ from ..utils import geodesy
 from ..constants import DEG_PER_RAD, π
 
 
-__all__ = [
-    "baserad",
-    "sitedata",
-]
+__all__ = ["tafl", "baserad", "sitedata",]
 
 BASERAD_URL = "https://www.ic.gc.ca/engineering/BC_DBF_FILES/baserad.zip"
 SITEDATA_URL = "https://www.ic.gc.ca/engineering/SMS_TAFL_Files/Site_Data_Extract.zip"
+TAFL_URL = "http://www.ic.gc.ca/engineering/SMS_TAFL_Files/TAFL_LTAF.zip"
 
 SRTM_URL_FORMAT = "https://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/ASCII/srtm_{xx:02d}_{yy:02d}.zip"
-
 
 def download(url, dest, force=False, chunk_size=8192):
     """Download file to disk, with maximum memory-footprint.
@@ -62,9 +59,7 @@ def download(url, dest, force=False, chunk_size=8192):
 
     logger.info(f"downloading {url} to {dest}")
 
-    with open(dest, "wb",) as f, requests.get(
-        url, stream=True
-    ) as r, tqdm(total=file_size, unit="B", unit_scale=True, desc=dest.name) as pbar:
+    with open(dest, "wb",) as f, requests.get(url, stream=True) as r, tqdm(total=file_size, unit="B", unit_scale=True, desc=dest.name) as pbar:
         for chunk in r.iter_content(chunk_size=chunk_size):
             f.write(chunk)
             pbar.update(len(chunk))
@@ -87,6 +82,17 @@ def unzip(path, remove=False):
 
     return [path.parent.joinpath(name) for name in namelist]
 
+def tafl(url=TAFL_URL, dest=CACHE_DIR, munge=True, force=False, remove=False):
+    """Fetch TAFL transmitter data.
+
+    ISED supplies `TAFL_LTAF.zip`, which contains a single CSV file with comprehensive data from the Spectrum Management System.
+    """
+    dest = download(url, dest, force=force)
+    contents = unzip(dest, remove=remove)
+
+    if munge:
+        from . import munge
+        munge.tafl(input_path=contents[0].with_suffix(".csv"))
 
 def baserad(url=BASERAD_URL, dest=CACHE_DIR, munge=True, force=False, remove=False):
     """Fetch baserad (AM, FM, TV) transmitter data.
@@ -100,7 +106,6 @@ def baserad(url=BASERAD_URL, dest=CACHE_DIR, munge=True, force=False, remove=Fal
 
     if munge:
         from . import munge
-
         munge.baserad(input_dir=contents[0].parent)
 
 
@@ -114,7 +119,6 @@ def sitedata(url=SITEDATA_URL, dest=CACHE_DIR, munge=True, force=False, remove=F
 
     if munge:
         from . import munge
-
         munge.sitedata(input_path=contents[0].with_suffix(".csv"))
 
 
@@ -170,14 +174,16 @@ def srtm(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Munge the Industry Canada transmitter dbf files."
-    )
-    parser.add_argumennt("--baserad", action="store_true")
-    parser.add_argumennt("--sitedata", action="store_true")
-    parser.add_argumennt("--munge", action="store_true")
-    parser.add_argumennt("--output", type=str, default=CACHE_DIR)
+    parser = argparse.ArgumentParser(description="Munge the Industry Canada transmitter dbf files.")
+    parser.add_argument("--tafl", action="store_true")
+    parser.add_argument("--baserad", action="store_true")
+    parser.add_argument("--sitedata", action="store_true")
+    parser.add_argument("--munge", action="store_true")
+    parser.add_argument("--output", type=str, default=CACHE_DIR)
     args = parser.parse_args()
+
+    if args.tafl:
+        tafl(dest=args.output, munge=args.munge)
 
     if args.baserad:
         baserad(dest=args.output, munge=args.munge)

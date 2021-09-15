@@ -14,10 +14,7 @@ from ..utils.misc import sex_to_dec
 logger = logging.getLogger('rasp')
 logger.addHandler(logging.NullHandler())
 
-__all__ = [
-    "baserad",
-    "sitedata",
-]
+__all__ = ["tafl", "baserad", "sitedata",]
 
 
 DROP_COLUMNS = [
@@ -110,6 +107,64 @@ NUMERIC_COLUMNS = [
 
 def dbf_to_df(path, encoding="latin1"):
     return pd.DataFrame(iter(dbfread.DBF(path, encoding=encoding)))
+
+
+def _tafl(stations, radians=False, allow_duplicates=False, allow_nonoperational=False, allow_unauthorized=False):
+    logger.info('Munging transmitter database...')
+    transmitters = stations.loc[stations.station_function == 'TX'].copy()
+
+    if not radians:
+        # Convert latitudes and longitudes from degrees to radians
+        transmitters.loc[:,'latitude'] = np.radians(transmitters[:,'latitude'])
+        transmitters.loc[:,'longitude'] = np.radians(transmitters[:,'longitude'])
+
+    if not allow_duplicates:
+        # Remove any duplicated tranmitters in database
+        n1 = len(transmitters)
+        transmitters.drop_duplicates(keep='first', inplace=True)
+        n2 = len(transmitters)
+        logger.info(f'Found and removed {n1-n2} duplicated transmitters')
+
+    if not allow_nonoperational:
+        # Remove non-operational transmitters (including auxiliary transmitters and those under consideration)
+        n1 = len(transmitters)
+        bad_operational_status = ('AX','AXO','AXP','UX','PUC','UC')
+        transmitters = transmitter[~transmitters.operational_status.isin(bad_operational_status)]
+        n2 = len(transmitters)
+        logger.info(f'Removed {n1-n2} non-operational transmitters (including auxiliary transmitters and those under consideration)')
+
+    if not allow_unauthorized:
+        # Remove transmitters with cancelled or "not granted" authorization status
+        n1 = len(transmitters)
+        bad_authorization_status = ('-4','-2','NG')
+        transmitters = transmitters[~transmitters.authorization_status.isin(bad_authorization_status)]
+        n2 = len(transmitters)
+        logger.info(f'Removed {n1-n2} unauthorized transmitters')
+
+    return transmitters
+
+
+def tafl(input_path, output_path=None):
+    columns = [0,1,10,14,15,16,23,24,25,26,27,28,29,30,31,33,37,39,40,41,42,43,48,49,51,52,54,56,58,59]
+    fieldnames = ['station_function','frequency','bandwidth','erp','power','loss','gain','pattern',
+                      'half_power_beamwidth','fb_ratio','polarization','haat','azimuth','elevation_angle','location',
+                      'call_sign','identical_stations','province','latitude','longitude','ground_elevation','height',
+                      'service','subservice','authorization_status','in-service_date','licensee','operational_status',
+                      'horizontal_power','vertical_power']
+    dtypes = {'frequency': float,'bandwidth': float,'erp': float,'power': float,'loss': float,'gain': float,
+                  'pattern': str,'half_power_beamwidth': float,'fb_ratio': float,'haat': float,'azimuth': float,
+                  'elevation_angle': float,'latitude': float,'longitude': float,'ground_elevation': float,'height': float,
+                  'service': int,'subservice': int,'authorization_status': str,'licensee': str, 'operational_status': str,
+                  'horizontal_power': float,'vertical_power': float}
+    stations = pd.read_csv(input_path, usecols=columns, names=fieldnames, dtype=dtypes, header=None, na_values=['-'])
+    transmitters = _tafl(stations)
+
+    if output_path is None:
+        output_path = input_path.with_name(input_path.name.lower())
+
+    logger.info(f'writing munged TAFL data to {output_path}')
+    transmitters.to_csv(output_path, index=False)
+    return output_path
 
 
 def _sitedata(stations):
@@ -279,12 +334,14 @@ def baserad(input_dir, output_dir=None):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Munge the Industry Canada transmitter dbf files."
-    )
-    parser.add_argumennt("--baserad", type=str)
-    parser.add_argumennt("--sitedata", type=str)
+    parser = argparse.ArgumentParser(description="Munge the Industry Canada transmitter dbf files.")
+    parser.add_argument("--tafl", type=str)
+    parser.add_argument("--baserad", type=str)
+    parser.add_argument("--sitedata", type=str)
     args = parser.parse_args()
+
+    if args.tafl:
+        tafl(args.tafl)
 
     if args.baserad:
         baserad(args.baserad)
