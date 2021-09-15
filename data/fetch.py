@@ -152,15 +152,9 @@ def srtm_inds(bounds=None, location=None, radius=None):
     return itertools.product(y_inds, x_inds)
 
 
-def srtm(
-    bounds=None,
-    location=None,
-    radius=None,
-    url_format=SRTM_URL_FORMAT,
-    dest=SRTM_DIR,
-    **kwargs,
-):
+def srtm(bounds=None, location=None, radius=None, url_format=SRTM_URL_FORMAT, dest=SRTM_DIR, **kwargs):
     """Fetch SRTM digital elevation data."""
+
     urls = [
         SRTM_URL_FORMAT.format(xx=xx, yy=yy)
         for yy, xx in srtm_inds(bounds=bounds, location=location, radius=radius)

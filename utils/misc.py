@@ -36,6 +36,6 @@ def check_bounds(bounds):
     N = bounds[1][0]
     E = bounds[1][1]
     if E <= W:
-        raise ValueError(f'East bound ({E}) should be greater than West bound ({W}).')
+        raise ValueError(f'East bound ({E} rad) should be greater than West bound ({W} rad).')
     if N <= S:
-        raise ValueError(f'North bound ({N}) should be greater than South bound ({S}).')
+        raise ValueError(f'North bound ({N} rad) should be greater than South bound ({S} rad).')

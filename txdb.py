@@ -77,10 +77,13 @@ class TxDB:
         return cls(pd.read_csv(filename, low_memory=False, **kwargs))
 
     @classmethod
-    def from_cache(cls, baserad=True, sitedata=True, **kwargs):
+    def from_cache(cls, tafl=True, baserad=False, sitedata=False, **kwargs):
         """Generate a TxDB instance from cached transmitter data."""
         from rasp import CACHE_DIR
         paths = set()
+
+        if tafl:
+            paths.add(CACHE_DIR.joinpath('tafl_ltaf.csv'))
 
         if baserad:
             for fname in ['amstatio.csv', 'fmstatio.csv', 'tvstatio.csv']:
@@ -92,8 +95,11 @@ class TxDB:
         return cls(pd.DataFrame()).concat(*(cls.from_csv(p, **kwargs) for p in paths))
 
     @classmethod
-    def from_web(cls, baserad=True, sitedata=True, **kwargs):
+    def from_web(cls, tafl=True, baserad=False, sitedata=False, **kwargs):
         from .data import fetch
+
+        if tafl:
+            fetch.tafl()
 
         if baserad:
             fetch.baserad()
@@ -101,7 +107,7 @@ class TxDB:
         if sitedata:
             fetch.sitedata()
 
-        return cls.from_cache(baserad=baserad, sitedata=sitedata, **kwargs)
+        return cls.from_cache(tafl=tafl, baserad=baserad, sitedata=sitedata, **kwargs)
 
     def add_column(self, name, values):
         self.dataframe.loc[:, name] = values

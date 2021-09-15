@@ -1,10 +1,12 @@
 """Perform file operations on transmitter and elevation data"""
 
+import os
 import pickle
 import pandas as pd
 
 from ..elevation import Elevation
 from ..txdb import TxDB
+from rasp import CACHE_DIR
 
 def save_elevation(elevation_obj, pickle_fname):
 	# Convert Elevation object to dictionary
@@ -39,3 +41,17 @@ def save_txdb(txdb_obj, csv_fname):
 def load_txdb(csv_fname):
 	# Load previously saved TxDB object from .csv file
 	return TxDB(pd.read_csv(csv_fname))
+
+def fix_raw_tafl(tafl_path=CACHE_DIR.joinpath('TAFL_LTAF.csv')):
+	# Fix the delimiter error in the 8th column of line 127551 in TAFL_LTAF.csv
+	with open(tafl_path, encoding='utf-8') as f:
+		lines = f.readlines()
+
+	lines[127550] = '"TX","459.6125","0001913061","1","D","A","LM_CAN_UHF_DUPLEX5_12K5","E369\'","210634FC","D","7.6","7K60F1W","LMR-DIGITAL","","6.9897","5","0","","","-","-","","","2.1484","","","","","0","","","Creston BC","portable radios","","3","ML","","5","Swan Valley Lodge","BC","49.09814722","-116.51522222","","","L","1","","010883606-001","3","300","S","G","2021-05-12","100000092629","Interior Heath Authority Swan Valley Lodge","818 Vancouver Street,Creston,BC,V0B 1G0","","","0","0",""\n'
+
+	temp = CACHE_DIR.joinpath('temp.csv')
+	with open(temp, 'w', encoding='utf-8') as f:
+		f.writelines(lines)
+
+	os.remove(tafl_path)
+	os.rename(temp, tafl_path)

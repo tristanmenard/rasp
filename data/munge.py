@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 
 from ..utils.misc import sex_to_dec
+from .file import fix_raw_tafl
 
 
 logger = logging.getLogger('rasp')
@@ -115,8 +116,8 @@ def _tafl(stations, radians=False, allow_duplicates=False, allow_nonoperational=
 
     if not radians:
         # Convert latitudes and longitudes from degrees to radians
-        transmitters.loc[:,'latitude'] = np.radians(transmitters[:,'latitude'])
-        transmitters.loc[:,'longitude'] = np.radians(transmitters[:,'longitude'])
+        transmitters.loc[:,'latitude'] = np.radians(transmitters.loc[:,'latitude'])
+        transmitters.loc[:,'longitude'] = np.radians(transmitters.loc[:,'longitude'])
 
     if not allow_duplicates:
         # Remove any duplicated tranmitters in database
@@ -129,7 +130,7 @@ def _tafl(stations, radians=False, allow_duplicates=False, allow_nonoperational=
         # Remove non-operational transmitters (including auxiliary transmitters and those under consideration)
         n1 = len(transmitters)
         bad_operational_status = ('AX','AXO','AXP','UX','PUC','UC')
-        transmitters = transmitter[~transmitters.operational_status.isin(bad_operational_status)]
+        transmitters = transmitters[~transmitters.operational_status.isin(bad_operational_status)]
         n2 = len(transmitters)
         logger.info(f'Removed {n1-n2} non-operational transmitters (including auxiliary transmitters and those under consideration)')
 
@@ -156,7 +157,13 @@ def tafl(input_path, output_path=None):
                   'elevation_angle': float,'latitude': float,'longitude': float,'ground_elevation': float,'height': float,
                   'service': int,'subservice': int,'authorization_status': str,'licensee': str, 'operational_status': str,
                   'horizontal_power': float,'vertical_power': float}
-    stations = pd.read_csv(input_path, usecols=columns, names=fieldnames, dtype=dtypes, header=None, na_values=['-'])
+    try:
+        stations = pd.read_csv(input_path, usecols=columns, names=fieldnames, dtype=dtypes, header=None, na_values=['-'])
+    except ValueError:
+        logger.warning('Failed to read CSV. Trying to fix known delimiter error in TAFL database...')
+        fix_raw_tafl(tafl_path=input_path)
+        stations = pd.read_csv(input_path, usecols=columns, names=fieldnames, dtype=dtypes, header=None, na_values=['-'])
+        logger.warning('Successfully read CSV!')
     transmitters = _tafl(stations)
 
     if output_path is None:
