@@ -43,11 +43,13 @@ def load_txdb(csv_fname):
 	return TxDB(pd.read_csv(csv_fname))
 
 def fix_raw_tafl(tafl_path=CACHE_DIR.joinpath('TAFL_LTAF.csv')):
-	# Fix the delimiter error in the 8th column of line 127551 in TAFL_LTAF.csv
+	# Fix the delimiter known error in TAFL_LTAF.csv
 	with open(tafl_path, encoding='utf-8') as f:
 		lines = f.readlines()
 
-	lines[127550] = '"TX","459.6125","0001913061","1","D","A","LM_CAN_UHF_DUPLEX5_12K5","E369\'","210634FC","D","7.6","7K60F1W","LMR-DIGITAL","","6.9897","5","0","","","-","-","","","2.1484","","","","","0","","","Creston BC","portable radios","","3","ML","","5","Swan Valley Lodge","BC","49.09814722","-116.51522222","","","L","1","","010883606-001","3","300","S","G","2021-05-12","100000092629","Interior Heath Authority Swan Valley Lodge","818 Vancouver Street,Creston,BC,V0B 1G0","","","0","0",""\n'
+	for i in range(len(lines)):
+		if lines[i] == '"TX","459.6125","0001913061","1","D","A","LM_CAN_UHF_DUPLEX5_12K5","E369"","210634FC","D","7.6","7K60F1W","LMR-DIGITAL","","6.9897","5","0","","","-","-","","","2.1484","","","","","0","","","Creston BC","portable radios","","3","ML","","5","Swan Valley Lodge","BC","49.09814722","-116.51522222","","","L","1","","010883606-001","3","300","S","G","2021-05-12","100000092629","Interior Heath Authority Swan Valley Lodge","818 Vancouver Street,Creston,BC,V0B 1G0","","","0","0",""\n':
+			lines[i] = '"TX","459.6125","0001913061","1","D","A","LM_CAN_UHF_DUPLEX5_12K5","E369\'","210634FC","D","7.6","7K60F1W","LMR-DIGITAL","","6.9897","5","0","","","-","-","","","2.1484","","","","","0","","","Creston BC","portable radios","","3","ML","","5","Swan Valley Lodge","BC","49.09814722","-116.51522222","","","L","1","","010883606-001","3","300","S","G","2021-05-12","100000092629","Interior Heath Authority Swan Valley Lodge","818 Vancouver Street,Creston,BC,V0B 1G0","","","0","0",""\n'
 
 	temp = CACHE_DIR.joinpath('temp.csv')
 	with open(temp, 'w', encoding='utf-8') as f:
